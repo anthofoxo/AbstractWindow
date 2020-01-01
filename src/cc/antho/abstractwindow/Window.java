@@ -28,4 +28,10 @@ public abstract class Window implements EventListener {
 
 	public abstract long getHandle();
 
+	public float getAspect() {
+
+		return (float) getWidth() / (float) getHeight();
+
+	}
+
 }
