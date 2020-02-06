@@ -45,27 +45,36 @@ import cc.antho.eventsystem.EventHandler;
 import cc.antho.eventsystem.EventLayer;
 import lombok.Getter;
 
+import static org.lwjgl.system.MemoryUtil.*;
+
 public class GlfwWindow extends Window {
 
-	@Getter private long handle;
+	@Getter
+	private long handle;
 	private int width, height;
 
-	public GlfwWindow(GLContext context, EventLayer layer, int width, int height, String title) {
+	public GlfwWindow(EventLayer layer, GlfwWindowConfig config) {
 
 		super(layer);
 
 		glfwDefaultWindowHints();
-		context.set();
+		glfwWindowHint(GLFW_VISIBLE, config.visible ? GLFW_TRUE : GLFW_FALSE);
 
-		handle = glfwCreateWindow(width, height, title, 0L, 0L);
+		if (config.context != null) config.context.set();
 
-		if (handle == 0) throw new RuntimeException("Failed to create window");
+		handle = glfwCreateWindow(config.width, config.height, config.title, NULL, NULL);
 
-		this.width = width;
-		this.height = height;
+		if (handle == NULL) throw new RuntimeException("Failed to create window");
 
-		GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-		glfwSetWindowPos(handle, (vidmode.width() - width) / 2, (vidmode.height() - height) / 2);
+		this.width = config.width;
+		this.height = config.height;
+
+		if (config.center) {
+
+			GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+			glfwSetWindowPos(handle, (vidmode.width() - width) / 2, (vidmode.height() - height) / 2);
+
+		}
 
 		glfwSetWindowPosCallback(handle, (long window, int x, int y) -> {
 
@@ -189,15 +198,11 @@ public class GlfwWindow extends Window {
 
 			String[] array = new String[count];
 
-			for (int i = 0; i < count; i++)
-				array[i] = GLFWDropCallback.getName(names, i);
+			for (int i = 0; i < count; i++) array[i] = GLFWDropCallback.getName(names, i);
 
 			layer.dispatch(new EventWindowDrop(this, array));
 
 		});
-
-		glfwMakeContextCurrent(handle);
-		glfwSwapInterval(1);
 
 	}
 
@@ -356,6 +361,18 @@ public class GlfwWindow extends Window {
 
 		glfwShowWindow(handle);
 		focus();
+
+	}
+
+	public void makeCurrent() {
+
+		glfwMakeContextCurrent(handle);
+
+	}
+
+	public static void makeCurrent(long handle) {
+
+		glfwMakeContextCurrent(handle);
 
 	}
 
